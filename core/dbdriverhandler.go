@@ -6,7 +6,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type DBDriverMetrics interface {
+type DBDriverActions interface {
 	Connect() error
 	GetUsedDisk() (int64, error)
 	GetActiveQueries() (int64, error)
@@ -21,7 +21,7 @@ type DBDriver struct {
 	typedb  string
 	id      uuid.UUID
 	name    string
-	Metrics *DBDriverMetrics
+	Actions DBDriverActions
 }
 
 func NewDBDriverHandler() *DBDriverHandler {
@@ -43,7 +43,7 @@ func (d *DBDriverHandler) GetDriverDBID(typedb string, name string) (*uuid.UUID,
 	return nil, errors.New("driver not found")
 }
 
-func (d *DBDriverHandler) AddDriverDB(typedb string, name string, metrics DBDriverMetrics) (*uuid.UUID, error) {
+func (d *DBDriverHandler) AddDriverDB(typedb string, name string, actions DBDriverActions) (*uuid.UUID, error) {
 	if typedb == "" || name == "" {
 		return nil, errors.New("typedb or name is empty")
 	}
@@ -59,7 +59,7 @@ func (d *DBDriverHandler) AddDriverDB(typedb string, name string, metrics DBDriv
 		typedb:  typedb,
 		name:    name,
 		id:      newID,
-		Metrics: &metrics,
+		Actions: actions,
 	}
 
 	d.DBDrivers = append(d.DBDrivers, driver)
