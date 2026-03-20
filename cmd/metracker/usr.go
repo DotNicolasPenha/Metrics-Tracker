@@ -26,9 +26,11 @@ func NewUser() (*Usr, error) {
 		return nil, err
 	}
 
-	driverDBHandler := core.NewDBDriverHandler()
-
 	dbHandler, err := core.NewDataBaseHandler(metrackerdirpath)
+	if err != nil {
+		return nil, err
+	}
+	driverDBHandler, err := core.NewDBDriverHandler(dbHandler)
 	if err != nil {
 		return nil, err
 	}
