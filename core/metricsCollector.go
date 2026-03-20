@@ -2,74 +2,69 @@ package core
 
 import (
 	"errors"
-	"sync"
 )
 
 type MetricsCollector struct {
 	dbdriverhandler *DBDriverHandler
+	dbhandler       *DataBaseHandler
 }
 
-func NewMetricsCollector(dbdriverhandler *DBDriverHandler) (*MetricsCollector, error) {
+func NewMetricsCollector(dbdriverhandler *DBDriverHandler, dbhandler *DataBaseHandler) (*MetricsCollector, error) {
 	if dbdriverhandler == nil {
 		return nil, errors.New("dbdriverhandler is nil")
 	}
+	if dbhandler == nil {
+		return nil, errors.New("dbhandler is nil")
+	}
 	return &MetricsCollector{
 		dbdriverhandler: dbdriverhandler,
+		dbhandler:       dbhandler,
 	}, nil
 }
 
-func (mc *MetricsCollector) StartConnectAllDriversdb() error {
-	var wg sync.WaitGroup
-	var errOnce sync.Once
-	var connectErr error
-
-	for _, dbdriver := range mc.dbdriverhandler.DBDrivers {
-		wg.Add(1)
-		go func(d DBDriver) {
-			defer wg.Done()
-			if err := mc.connectDBDriver(d); err != nil {
-				errOnce.Do(func() {
-					connectErr = err
-				})
-			}
-		}(dbdriver)
-	}
-
-	wg.Wait()
-	return connectErr
-}
-
-func (mc *MetricsCollector) connectDBDriver(dbdriver DBDriver) error {
-	if dbdriver.Actions == nil {
-		return errors.New("dbdriver actions is nil for " + dbdriver.name)
-	}
-	return dbdriver.Actions.Connect()
-}
-
-func (mc *MetricsCollector) GetMetricsOfDBName(namedb string) (map[string]int64, error) {
+func (mc *MetricsCollector) GetMetricsOfdbByName(namedb string) (map[string]int64, error) {
 	if namedb == "" {
 		return nil, errors.New("namedb is empty")
 	}
 
-	for _, driver := range mc.dbdriverhandler.DBDrivers {
-		if driver.name == namedb {
-			if driver.Actions == nil {
-				return nil, errors.New("actions not available for " + namedb)
-			}
-
-			metrics := make(map[string]int64)
-
-			disk, _ := driver.Actions.GetUsedDisk()
-			ram, _ := driver.Actions.EstimateUsedRAM()
-			queries, _ := driver.Actions.GetActiveQueries()
-
-			metrics["used_disk"] = disk
-			metrics["used_ram"] = ram
-			metrics["active_queries"] = queries
-
-			return metrics, nil
-		}
+	db, err := mc.dbhandler.FindDataBaseByName(namedb)
+	if err != nil {
+		return nil, err
 	}
 
-	return nil, errors.New("driver not found for " + namedb)
+	driver, err := mc.dbdriverhandler.findDriverByID(db.Driverid)
+	if err != nil {
+		return nil, err
+	}
+
+	if driver.Actions == nil {
+		return nil, errors.New("actions not available for " + namedb)
+	}
+
+	if err := driver.Actions.Connect(db.Url); err != nil {
+		return nil, err
+	}
+
+	metrics := make(map[string]int64)
+
+	disk, err := driver.Actions.GetUsedDisk()
+	if err != nil {
+		return nil, err
+	}
+
+	ram, err := driver.Actions.EstimateUsedRAM()
+	if err != nil {
+		return nil, err
+	}
+
+	queries, err := driver.Actions.GetActiveQueries()
+	if err != nil {
+		return nil, err
+	}
+
+	metrics["used_disk"] = disk
+	metrics["used_ram"] = ram
+	metrics["active_queries"] = queries
+
+	return metrics, nil
 }
