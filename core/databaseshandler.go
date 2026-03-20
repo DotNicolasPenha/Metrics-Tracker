@@ -52,7 +52,6 @@ func (dbh *DataBaseHandler) load() error {
 	data, err := os.ReadFile(dbh.databaseJsonPath)
 
 	if os.IsNotExist(err) {
-		// cria arquivo já com conteúdo válido
 		dbh.databases = []DataBase{}
 		return dbh.save()
 	}
