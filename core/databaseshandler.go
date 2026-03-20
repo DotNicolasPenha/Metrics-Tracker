@@ -13,6 +13,7 @@ type DataBaseHandler struct {
 	databaseJsonPath string
 	databases        []DataBase
 }
+
 type DataBase struct {
 	Id       uuid.UUID      `json:"id"`
 	Typedb   string         `json:"typedb"`
@@ -21,6 +22,7 @@ type DataBase struct {
 	Limits   DataBaseLimits `json:"limits"`
 	Driverid uuid.UUID      `json:"driverid"`
 }
+
 type DataBaseLimits struct {
 	Maxconn int64 `json:"maxconn"`
 	Maxram  int64 `json:"maxram"`
@@ -30,27 +32,50 @@ type DataBaseLimits struct {
 
 func NewDataBaseHandler(metrackerdirpath string) (*DataBaseHandler, error) {
 	if metrackerdirpath == "" {
-		return nil, errors.New("metrackerdirpath param is empty.")
+		return nil, errors.New("metrackerdirpath param is empty")
 	}
 
-	databaseJsonPath := filepath.Join(metrackerdirpath, "databases.json")
+	path := filepath.Join(metrackerdirpath, "databases.json")
 
 	dbh := &DataBaseHandler{
-		databaseJsonPath: databaseJsonPath,
+		databaseJsonPath: path,
 		databases:        []DataBase{},
 	}
 
-	if err := dbh.createDataBaseFile(); err != nil {
-		return nil, err
-	}
-
-	if err := dbh.getDataBaseFile(); err != nil {
+	if err := dbh.load(); err != nil {
 		return nil, err
 	}
 
 	return dbh, nil
 }
+func (dbh *DataBaseHandler) load() error {
+	data, err := os.ReadFile(dbh.databaseJsonPath)
 
+	if os.IsNotExist(err) {
+		// cria arquivo já com conteúdo válido
+		dbh.databases = []DataBase{}
+		return dbh.save()
+	}
+
+	if err != nil {
+		return err
+	}
+
+	if len(data) == 0 {
+		dbh.databases = []DataBase{}
+		return nil
+	}
+
+	return json.Unmarshal(data, &dbh.databases)
+}
+func (dbh *DataBaseHandler) save() error {
+	data, err := json.MarshalIndent(dbh.databases, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(dbh.databaseJsonPath, data, 0644)
+}
 func (dbh *DataBaseHandler) AddDatabase(db DataBase) error {
 	if db.Name == "" {
 		return errors.New("database name is empty")
@@ -63,9 +88,8 @@ func (dbh *DataBaseHandler) AddDatabase(db DataBase) error {
 	}
 
 	dbh.databases = append(dbh.databases, db)
-	return dbh.rewriteDataBaseFile()
+	return dbh.save()
 }
-
 func (dbh *DataBaseHandler) RmDatabase(name string) error {
 	if name == "" {
 		return errors.New("name is empty")
@@ -74,7 +98,21 @@ func (dbh *DataBaseHandler) RmDatabase(name string) error {
 	for i, db := range dbh.databases {
 		if db.Name == name {
 			dbh.databases = append(dbh.databases[:i], dbh.databases[i+1:]...)
-			return dbh.rewriteDataBaseFile()
+			return dbh.save()
+		}
+	}
+
+	return errors.New("database not found")
+}
+func (dbh *DataBaseHandler) UpdateDataBase(updated DataBase) error {
+	if updated.Name == "" {
+		return errors.New("name is empty")
+	}
+
+	for i, db := range dbh.databases {
+		if db.Name == updated.Name {
+			dbh.databases[i] = updated
+			return dbh.save()
 		}
 	}
 
@@ -92,60 +130,4 @@ func (dbh *DataBaseHandler) FindDataBaseByName(name string) (*DataBase, error) {
 	}
 
 	return nil, errors.New("database not found")
-}
-
-func (dbh *DataBaseHandler) UpdateDataBase(updated DataBase) error {
-	if updated.Name == "" {
-		return errors.New("name is empty")
-	}
-
-	for i, db := range dbh.databases {
-		if db.Name == updated.Name {
-			dbh.databases[i] = updated
-			return dbh.rewriteDataBaseFile()
-		}
-	}
-
-	return errors.New("database not found")
-}
-
-func (dbh *DataBaseHandler) createDataBaseFile() error {
-	_, err := os.Stat(dbh.databaseJsonPath)
-	if err == nil {
-		return nil
-	}
-
-	if !os.IsNotExist(err) {
-		return err
-	}
-
-	file, err := os.Create(dbh.databaseJsonPath)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	_, err = file.Write([]byte("[]"))
-	return err
-}
-func (dbh *DataBaseHandler) getDataBaseFile() error {
-	data, err := os.ReadFile(dbh.databaseJsonPath)
-	if err != nil {
-		return err
-	}
-
-	if len(data) == 0 {
-		dbh.databases = []DataBase{}
-		return nil
-	}
-
-	return json.Unmarshal(data, &dbh.databases)
-}
-func (dbh *DataBaseHandler) rewriteDataBaseFile() error {
-	data, err := json.MarshalIndent(dbh.databases, "", "  ")
-	if err != nil {
-		return err
-	}
-
-	return os.WriteFile(dbh.databaseJsonPath, data, 0644)
 }
