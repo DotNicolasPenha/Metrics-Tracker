@@ -1,0 +1,34 @@
+o cliente roda mt initnew
+- ok, initializeted.
+
+o client roda mt add db -n "namedatabase" -url "..." 
+- ok, added.
+
+o client roda mt on wdb "namedatabase"
+- ok.
+
+o client roda mt list wdb -all
+- "namedatabase": "12e91309j" - ("...") ON
+
+o client roda mt add limits "namedatabase" -jsonf "./limits.json"
+- ok, added.
+
+o client roda mt off wdb "namedatabase"
+- ok.
+
+o client roda mt on wdb "namedatabase"
+- ok.
+
+o client roda mt list wdb -all -on
+- ok.
+
+o client roda mt list wdb -all -off
+- ok.
+
+o client roda mt add blocks -jsonf "./blocks.json"
+- ok, added.
+
+o client roda mt on blocks
+- ok.
+
+o client roda mt list clients -all
