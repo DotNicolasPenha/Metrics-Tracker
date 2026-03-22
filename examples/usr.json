@@ -1,0 +1,42 @@
+{
+  "usr":"mt001",
+  "id": "093849",
+  "dbs":[
+    {
+     "name": "namedatabase",
+     "id": "33209j23094",
+     "type": "postgresql",
+     "url": "...",
+     "limits": {
+      "maxConnections": 1000,
+      "maxDiskMB": 4000,
+      "maxCPUPercent": 80,
+      "maxRAMMB": 5000
+     },
+
+    "blocking-rules": {
+      "queries": [
+        {
+          "match": "DELETE * FROM users",
+          "block ": {
+            "durationsMs": 0,
+            "duration":false 
+          }
+        }
+      ],
+
+      "clients": [
+        {
+          "id": "*",
+          "rateLimit": {
+            "requestsPerMinute": 10,
+            "requestsPerDay": 200
+          },
+          "block": {
+            "durationMs": 2000
+          }
+        }
+      ]
+    }
+  }
+]}
