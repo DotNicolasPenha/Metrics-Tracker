@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"os"
+	"path"
 )
 
 func (dwh *DataWorkHandler) Load(v any, jsonpath string) error {
@@ -13,7 +14,7 @@ func (dwh *DataWorkHandler) Load(v any, jsonpath string) error {
 	if v == nil {
 		return errors.New("'v' is empty to load")
 	}
-	data, err := os.ReadFile(dwh.pathToWork)
+	data, err := os.ReadFile(path.Join(dwh.pathToWork, jsonpath))
 
 	if err != nil {
 		return err
@@ -32,5 +33,5 @@ func (dwh *DataWorkHandler) Save(v any, jsonpath string) error {
 		return err
 	}
 
-	return os.WriteFile(dwh.pathToWork, data, 0644)
+	return os.WriteFile(path.Join(dwh.pathToWork, jsonpath), data, 0644)
 }
