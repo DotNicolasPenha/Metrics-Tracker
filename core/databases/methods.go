@@ -6,7 +6,6 @@ func (dbh *DataBaseHandler) AddDatabase(db DataBase) error {
 	if db.Name == "" {
 		return errors.New("database name is empty")
 	}
-
 	for _, existing := range dbh.Databases {
 		if existing.Name == db.Name {
 			return errors.New("database with this name already exists")
@@ -14,7 +13,7 @@ func (dbh *DataBaseHandler) AddDatabase(db DataBase) error {
 	}
 
 	dbh.Databases = append(dbh.Databases, db)
-	return dbh.save()
+	return dbh.dwjson.Save(dbh.Databases, dbh.databasejsonname)
 }
 func (dbh *DataBaseHandler) RmDatabase(name string) error {
 	if name == "" {
@@ -24,7 +23,7 @@ func (dbh *DataBaseHandler) RmDatabase(name string) error {
 	for i, db := range dbh.Databases {
 		if db.Name == name {
 			dbh.Databases = append(dbh.Databases[:i], dbh.Databases[i+1:]...)
-			return dbh.save()
+			return dbh.dwjson.Save(dbh.Databases, dbh.databasejsonname)
 		}
 	}
 
@@ -38,7 +37,7 @@ func (dbh *DataBaseHandler) UpdateDataBase(updated DataBase) error {
 	for i, db := range dbh.Databases {
 		if db.Name == updated.Name {
 			dbh.Databases[i] = updated
-			return dbh.save()
+			return dbh.dwjson.Save(dbh.Databases, dbh.databasejsonname)
 		}
 	}
 
