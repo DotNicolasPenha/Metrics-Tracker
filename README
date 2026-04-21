@@ -2,14 +2,19 @@ Metracker
 
 A guard for your database.
 
-Capture metrics, limit connections, and protect your database from 
-suspicious queries. That's what Metracker offers you.
+Capture metrics, limit connections, and protect your database from
+suspicious queries. That’s what Metracker offers.
 
-Discover the repository:
+Repository structure:
 
-./example/db - is a database example to be protect.
+./example/db  
+Example database used for testing.
 
-./build.bash - is a script to build the CLI.
+./build.sh  
+Script to build the CLI.
 
-./interceptor - is the heart of the Metracker, there is create the
-interceptor for your database.
+./interceptor  
+The core of Metracker. Responsible for creating and managing the database interceptor.
+
+./user/jsonsave.go  
+Handles persistence of user data in JSON format.
