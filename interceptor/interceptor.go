@@ -14,12 +14,12 @@ var (
 
 type Interceptor struct {
 	mu        sync.Mutex
-	ProxyAddr string
-	DBAddr    string
-	Metrics   Metrics
+	ProxyAddr string  `json:"proxy_addr"`
+	DBAddr    string  `json:"db_addr"`
+	Metrics   Metrics `json:"metrics"`
 }
 type Metrics struct {
-	ActConns int
+	ActConns int `json:"active_connections"`
 }
 
 func NewInterceptor(proxyAddr, dbAddr string) (*Interceptor, error) {
@@ -80,7 +80,19 @@ func (i *Interceptor) ConnHandler(conn net.Conn) {
 
 	go func() {
 		defer func() { pipedone <- struct{}{} }()
-		io.Copy(dbConn, conn)
+		buf := make([]byte, 4096)
+		for {
+			n, err := conn.Read(buf)
+			if err != nil {
+				return
+			}
+			if n > 0 {
+				_, err := dbConn.Write(buf[:n])
+				if err != nil {
+					return
+				}
+			}
+		}
 	}()
 	go func() {
 		defer func() { pipedone <- struct{}{} }()
