@@ -3,7 +3,7 @@
 set -e
 
 APP_NAME="mt"
-ENTRY="./cmd/metracker/metracker.go"
+ENTRY="./cmd/main.go"
 OUT_DIR="./bin"
 
 mkdir -p "$OUT_DIR"
