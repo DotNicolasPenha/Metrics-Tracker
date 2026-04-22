@@ -22,34 +22,29 @@ Bash
 - --db-addr: Remote database address to forward traffic to (e.g., localhost:5432).
 ---------------------------
 ### Examples
-1. Initializing a Configuration
+### 1. Initializing a Configuration
 
 To create a new config.json with a specific connection limit:
-./mt save --max-conn 150
-2. Adding Security Rules
+```
+ ./mt save --max-conn 150
+``` 
+
+### 2. Adding Security Rules
 
 To block DROP TABLE queries and allow only 1 retry before action:
+```
 ./mt save --block "DROP TABLE" --retrys 1
+``` 
 Note: This appends the rule to the existing list in the JSON file.
-3. Setting Up an Interceptor
+### 3. Setting Up an Interceptor
 
 To map a local port to a destination database:
-./mt save --proxy-addr ":5433" --db-addr "127.0.0.1:5432"
-4. Full Environment Setup
+```
+./mt save --proxy-addr ":5433" --db-addr "127.0.0.1:5432
+```
+### 4. Full Environment Setup
 
 You can combine multiple flags to configure an entire environment in a single command:
+``` 
 ./mt save -f prod.json -m 500 -b "DELETE FROM" -r 2 --proxy-addr ":6000" --db-addr "db.production.com:5432"
-Technical Details
-JSON Persistence
-
-The command uses MarshalIndent to ensure the output file is human-readable and properly formatted.
-Thread Safety
-
-When adding Interceptors, the CLI handles sync.Mutex constraints by using pointer semantics ([]*Interceptor). This prevents copying lock values and ensures the core engine can safely synchronize metrics during execution.
-Logic Flow
-
-    Load: Attempts to read the file specified by the --file flag.
-
-    Merge: Overwrites scalar values (like max-conn) and appends to slices (like block_queries and interceptors) only if the respective flags are explicitly called.
-
-    Write: Performs an atomic write back to the disk.
+```
