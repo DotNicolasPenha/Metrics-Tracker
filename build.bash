@@ -3,7 +3,7 @@
 set -e
 
 APP_NAME="mt"
-ENTRY="./cmd/main.go"
+ENTRY="."
 OUT_DIR="./bin"
 
 mkdir -p "$OUT_DIR"
