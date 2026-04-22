@@ -19,4 +19,4 @@ Handles persistence of user data in JSON format.
 Configure root cobra cli.
 
 - ./cmd/save 
-Save cmd, to learn how to use in CLI, go to [save cmd wiki](./docs/save.cmd.wiki.txt).
+Save cmd, to learn how to use in CLI, go to [save cmd wiki](./cmds/save.cmd.wiki.md).
