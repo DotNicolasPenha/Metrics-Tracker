@@ -11,6 +11,7 @@ import (
 
 var (
 	configFilePath string
+	name           string
 	maxConn        int
 	blockQuery     string
 	retrys         int
@@ -20,64 +21,70 @@ var (
 
 var saveCmd = &cobra.Command{
 	Use:   "save",
-	Short: "Save or update configurations via flags.",
+	Short: "Save or update configurations per interceptor.",
 	Run: func(cmd *cobra.Command, args []string) {
 		var currentUser user.User
 
 		if _, err := os.Stat(configFilePath); err == nil {
-			loadedUser, err := user.LoadUser(configFilePath)
-			if err == nil {
+			if loadedUser, err := user.LoadUser(configFilePath); err == nil {
 				currentUser = loadedUser
 			}
 		}
 
-		if cmd.Flags().Changed("max-conn") {
-			currentUser.Configurations.Limits.MaxActConnections = maxConn
-		}
-
-		if cmd.Flags().Changed("block") {
-			newRule := user.BlockQuerie{
-				Query:  []byte(blockQuery),
-				Retrys: retrys,
+		var target *interceptor.Interceptor
+		for _, i := range currentUser.Interceptors {
+			if i.Name == name {
+				target = i
+				break
 			}
-			currentUser.Configurations.BlockQueries = append(currentUser.Configurations.BlockQueries, newRule)
-			fmt.Printf("Added block rule: %s (Retries: %d)\n", blockQuery, retrys)
 		}
 
-		if cmd.Flags().Changed("proxy-addr") && cmd.Flags().Changed("db-addr") {
-			newInterceptor := &interceptor.Interceptor{
+		if target == nil && cmd.Flags().Changed("proxy-addr") && cmd.Flags().Changed("db-addr") {
+			target = &interceptor.Interceptor{
+				Name:      name,
 				ProxyAddr: proxyAddr,
 				DBAddr:    dbAddr,
 			}
-			currentUser.Interceptors = append(currentUser.Interceptors, newInterceptor)
-			fmt.Printf("Added new interceptor: %s -> %s\n", proxyAddr, dbAddr)
-		} else if cmd.Flags().Changed("proxy-addr") || cmd.Flags().Changed("db-addr") {
-			fmt.Println("Warning: To add an interceptor, you must provide both --proxy-addr and --db-addr")
+			currentUser.Interceptors = append(currentUser.Interceptors, target)
+			fmt.Printf("Created new interceptor: %s\n", name)
 		}
 
-		if currentUser.Interceptors == nil {
-			currentUser.Interceptors = []*interceptor.Interceptor{}
+		if target == nil {
+			fmt.Printf("Error: Interceptor '%s' not found. Provide --proxy-addr and --db-addr to create it.\n", name)
+			return
 		}
 
-		err := user.SaveUser(currentUser, configFilePath)
-		if err != nil {
+		if cmd.Flags().Changed("max-conn") {
+			target.Configurations.Limits.MaxActConnections = maxConn
+		}
+
+		if cmd.Flags().Changed("block") {
+			newRule := interceptor.BlockQuerie{
+				Query:  []byte(blockQuery),
+				Retrys: retrys,
+			}
+			target.Configurations.BlockQueries = append(target.Configurations.BlockQueries, newRule)
+		}
+
+		if err := user.SaveUser(currentUser, configFilePath); err != nil {
 			fmt.Printf("Error saving configuration: %v\n", err)
 			return
 		}
 
-		fmt.Printf("Configuration successfully updated in: %s\n", configFilePath)
+		fmt.Printf("Interceptor '%s' successfully updated in: %s\n", name, configFilePath)
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(saveCmd)
 
-	saveCmd.Flags().StringVarP(&configFilePath, "file", "f", "config.json", "Target configuration file")
-	saveCmd.Flags().IntVarP(&maxConn, "max-conn", "m", 100, "Update maximum active connections")
+	saveCmd.Flags().StringVarP(&configFilePath, "file", "f", "config.json", "Configuration file")
+	saveCmd.Flags().StringVarP(&name, "name", "n", "default", "Name of the interceptor to manage")
 
-	saveCmd.Flags().StringVarP(&blockQuery, "block", "b", "", "Add a new query string to blacklist")
-	saveCmd.Flags().IntVarP(&retrys, "retrys", "r", 3, "Number of retries allowed for the blocked query before permanent ban")
+	saveCmd.Flags().IntVarP(&maxConn, "max-conn", "m", 100, "Max connections for this interceptor")
+	saveCmd.Flags().StringVarP(&blockQuery, "block", "b", "", "Add query to blacklist")
+	saveCmd.Flags().IntVarP(&retrys, "retrys", "r", 3, "Retry limit for the blocked query")
 
-	saveCmd.Flags().StringVar(&proxyAddr, "proxy-addr", "pa", "Local address for the proxy to listen on (e.g., :5433)")
-	saveCmd.Flags().StringVar(&dbAddr, "db-addr", "da", "Target database address (e.g., localhost:5432)")
+	saveCmd.Flags().StringVar(&proxyAddr, "proxy-addr", "", "Local proxy address")
+	saveCmd.Flags().StringVar(&dbAddr, "db-addr", "", "Target database address")
 }

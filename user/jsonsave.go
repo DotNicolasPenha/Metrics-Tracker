@@ -3,7 +3,13 @@ package user
 import (
 	"encoding/json"
 	"os"
+
+	"github.com/DotNicolasPenha/Metrics-Tracker/interceptor"
 )
+
+type User struct {
+	Interceptors []*interceptor.Interceptor `json:"interceptors"`
+}
 
 func SaveUser(user User, path string) error {
 	jsonData, err := json.MarshalIndent(user, "", "  ")
