@@ -3,8 +3,8 @@ package user
 import "github.com/DotNicolasPenha/Metrics-Tracker/interceptor"
 
 type User struct {
-	Configurations Configurations            `json:"configurations"`
-	Interceptors   []interceptor.Interceptor `json:"interceptors"`
+	Configurations Configurations             `json:"configurations"`
+	Interceptors   []*interceptor.Interceptor `json:"interceptors"`
 }
 type Configurations struct {
 	Limits       Limits        `json:"limits"`
