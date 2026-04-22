@@ -14,12 +14,12 @@ var (
 
 type Interceptor struct {
 	mu        sync.Mutex
-	ProxyAddr string  `json:"proxy_addr"`
-	DBAddr    string  `json:"db_addr"`
-	Metrics   Metrics `json:"metrics"`
+	ProxyAddr string `json:"proxy_addr"`
+	DBAddr    string `json:"db_addr"`
+	Metrics   Metrics
 }
 type Metrics struct {
-	ActConns int `json:"active_connections"`
+	ActConns int
 }
 
 func NewInterceptor(proxyAddr, dbAddr string) (*Interceptor, error) {
