@@ -13,11 +13,27 @@ var (
 )
 
 type Interceptor struct {
-	mu        sync.Mutex
-	ProxyAddr string `json:"proxy_addr"`
-	DBAddr    string `json:"db_addr"`
-	Metrics   Metrics
+	mu             sync.Mutex
+	Name           string         `json:"name"`
+	ProxyAddr      string         `json:"proxy_addr"`
+	DBAddr         string         `json:"db_addr"`
+	Configurations Configurations `json:"configurations"`
+	Metrics        Metrics
 }
+type Configurations struct {
+	Limits       Limits        `json:"limits"`
+	BlockQueries []BlockQuerie `json:"block_queries"`
+}
+
+type BlockQuerie struct {
+	Query  []byte `json:"query"`
+	Retrys int    `json:"retrys"`
+}
+
+type Limits struct {
+	MaxActConnections int `json:"max_active_connections"`
+}
+
 type Metrics struct {
 	ActConns int
 }
