@@ -70,6 +70,7 @@ func (i *Interceptor) decrementConnections() {
 func (i *Interceptor) Run() error {
 	ln, err := net.Listen("tcp", i.ProxyAddr)
 	if err != nil {
+		i.logErrListenTCP(err)
 		return err
 	}
 	defer ln.Close()
@@ -77,6 +78,12 @@ func (i *Interceptor) Run() error {
 	for {
 		conn, err := ln.Accept()
 		if err != nil {
+			i.logErrLnAccept(err)
+			continue
+		}
+		if i.metrics.ActConns > i.Configurations.Limits.MaxActConnections {
+			i.logLimitExceeded(conn.RemoteAddr().String())
+			conn.Close()
 			continue
 		}
 		i.incrementConnections()
@@ -87,8 +94,10 @@ func (i *Interceptor) ConnHandler(conn net.Conn) {
 	defer i.decrementConnections()
 	defer conn.Close()
 	defer i.logDisconnection(conn.RemoteAddr().String())
+
 	dbConn, err := net.Dial("tcp", i.DBAddr)
 	if err != nil {
+		i.logErrDBDial(conn.RemoteAddr().String(), err)
 		return
 	}
 	defer dbConn.Close()
