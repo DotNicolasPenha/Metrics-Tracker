@@ -12,7 +12,7 @@ type User struct {
 }
 
 func SaveUser(user User, path string) error {
-	jsonData, err := json.MarshalIndent(user, "", "  ")
+	jsonData, err := json.MarshalIndent(user, "", "    ")
 	if err != nil {
 		return err
 	}
