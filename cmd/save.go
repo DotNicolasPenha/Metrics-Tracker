@@ -17,6 +17,7 @@ var (
 	retrys         int
 	proxyAddr      string
 	dbAddr         string
+	authorizedIP   string
 )
 
 var saveCmd = &cobra.Command{
@@ -66,6 +67,10 @@ var saveCmd = &cobra.Command{
 			target.Configurations.BlockQueries = append(target.Configurations.BlockQueries, newRule)
 		}
 
+		if cmd.Flags().Changed("authorized-ips") {
+			target.Configurations.AuthorizedIPs = append(target.Configurations.AuthorizedIPs, authorizedIP)
+		}
+
 		if err := user.SaveUser(currentUser, configFilePath); err != nil {
 			fmt.Printf("Error saving configuration: %v\n", err)
 			return
@@ -84,6 +89,7 @@ func init() {
 	saveCmd.Flags().IntVarP(&maxConn, "max-conn", "m", 100, "Max connections for this interceptor")
 	saveCmd.Flags().StringVarP(&blockQuery, "block", "b", "", "Add query to blacklist")
 	saveCmd.Flags().IntVarP(&retrys, "retrys", "r", 3, "Retry limit for the blocked query")
+	saveCmd.Flags().StringVarP(&authorizedIP, "authorized-ips", "i", "", "Comma-separated list of authorized IPs")
 
 	saveCmd.Flags().StringVar(&proxyAddr, "proxy-addr", "", "Local proxy address")
 	saveCmd.Flags().StringVar(&dbAddr, "db-addr", "", "Target database address")
