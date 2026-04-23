@@ -18,11 +18,12 @@ type Interceptor struct {
 	ProxyAddr      string         `json:"proxy_addr"`
 	DBAddr         string         `json:"db_addr"`
 	Configurations Configurations `json:"configurations"`
-	Metrics        Metrics
+	metrics        Metrics
 }
 type Configurations struct {
-	Limits       Limits        `json:"limits"`
-	BlockQueries []BlockQuerie `json:"block_queries"`
+	Limits        Limits        `json:"limits"`
+	BlockQueries  []BlockQuerie `json:"block_queries"`
+	AuthorizedIPs []string      `json:"authorized_ips"`
 }
 
 type BlockQuerie struct {
@@ -48,21 +49,21 @@ func NewInterceptor(proxyAddr, dbAddr string) (*Interceptor, error) {
 	return &Interceptor{
 		ProxyAddr: proxyAddr,
 		DBAddr:    dbAddr,
-		Metrics:   Metrics{},
+		metrics:   Metrics{},
 	}, nil
 }
 
 func (i *Interceptor) incrementConnections() {
 	i.mu.Lock()
 	defer i.mu.Unlock()
-	i.Metrics.ActConns++
+	i.metrics.ActConns++
 }
 
 func (i *Interceptor) decrementConnections() {
 	i.mu.Lock()
 	defer i.mu.Unlock()
-	if i.Metrics.ActConns > 0 {
-		i.Metrics.ActConns--
+	if i.metrics.ActConns > 0 {
+		i.metrics.ActConns--
 	}
 }
 
@@ -85,13 +86,13 @@ func (i *Interceptor) Run() error {
 func (i *Interceptor) ConnHandler(conn net.Conn) {
 	defer i.decrementConnections()
 	defer conn.Close()
-
+	defer i.logDisconnection(conn.RemoteAddr().String())
 	dbConn, err := net.Dial("tcp", i.DBAddr)
 	if err != nil {
 		return
 	}
 	defer dbConn.Close()
-
+	i.logConnection(conn.RemoteAddr().String())
 	pipedone := make(chan struct{}, 2)
 
 	go func() {
@@ -103,7 +104,8 @@ func (i *Interceptor) ConnHandler(conn net.Conn) {
 				return
 			}
 			if n > 0 {
-				_, err := dbConn.Write(buf[:n])
+				rawPack := buf[:n]
+				_, err := dbConn.Write(rawPack)
 				if err != nil {
 					return
 				}
