@@ -20,3 +20,6 @@ Configure root cobra cli.
 
 - ./cmd/save 
 Save cmd, to learn how to use in CLI, go to [save cmd wiki](./cmds/save.cmd.wiki.md).
+
+- ./cmd/run
+Run cmd, to learn how to use in CLI, go to [run cmd wiki](./cmds/run.cmd.wiki.md)
