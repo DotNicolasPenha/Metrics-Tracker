@@ -12,13 +12,14 @@ The `save` command is the primary tool for managing Metracker's interceptors. Fo
 
 | Short | Long          | Default       | Description                                           |
 | :---- | :------------ | :------------ | :---------------------------------------------------- |
-| `-f`  | `--file`      | `config.json` | Path to the target configuration file.               |
-| `-n`  | `--name`      | `default`     | **Crucial:** The unique name of the interceptor to manage. |
-| `-m`  | `--max-conn`  | `100`         | Maximum active connections for this specific interceptor. |
-| `-b`  | `--block`     | `""`          | Appends a query string to this interceptor's blacklist. |
-| `-r`  | `--retrys`    | `3`           | Retry limit for the query provided in the `--block` flag. |
-|       | `--proxy-addr`| `""`          | Local address for the proxy to listen on.             |
-|       | `--db-addr`   | `""`          | Remote database address to forward traffic to.        |
+| `-f`  | `--file`          | `config.json` | Path to the target configuration file.               |
+| `-n`  | `--name`          | `default`     | **Crucial:** The unique name of the interceptor to manage. |
+| `-m`  | `--max-conn`      | `100`         | Maximum active connections for this specific interceptor. |
+| `-b`  | `--block`         | `""`          | Appends a query string to this interceptor's blacklist. |
+| `-r`  | `--retrys`        | `3`           | Retry limit for the query provided in the `--block` flag. |
+|       | `--proxy-addr`    | `""`          | Local address for the proxy to listen on.             |
+|       | `--db-addr`       | `""`          | Remote database address to forward traffic to.        |
+| `-i`  | `--authorized-ips`| `""`      | Appends a ip to ips authorized list of interceptor        |
 
 ---
 
