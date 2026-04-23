@@ -1,0 +1,24 @@
+{
+    "interceptors": [
+        {
+            "name": "ExampleInterceptor",
+            "proxy_addr": ":8080",
+            "db_addr": "localhost:5432",
+            "configurations": {
+                "limits": {
+                    "max_active_connections": 0
+                },
+                "block_queries": [
+                    {
+                        "query": "REVMRVRFICogRlJPTSB1c2Vycw==",
+                        "retrys": 2
+                    }
+                ],
+                "authorized_ips": [
+                    "23234",
+                    "23234"
+                ]
+            }
+        }
+    ]
+}
