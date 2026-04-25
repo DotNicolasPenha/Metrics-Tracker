@@ -6,18 +6,15 @@
             "db_addr": "localhost:5432",
             "configurations": {
                 "limits": {
-                    "max_active_connections": 0
+                    "max_active_connections": 1
                 },
                 "block_queries": [
                     {
                         "query": "REVMRVRFICogRlJPTSB1c2Vycw==",
-                        "retrys": 2
+                        "retrys": 3
                     }
                 ],
-                "authorized_ips": [
-                    "23234",
-                    "23234"
-                ]
+                "authorized_ips": []
             }
         }
     ]
