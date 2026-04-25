@@ -1,6 +1,7 @@
 package interceptor
 
 import (
+	"bytes"
 	"errors"
 	"io"
 	"net"
@@ -54,15 +55,23 @@ func NewInterceptor(proxyAddr, dbAddr string) (*Interceptor, error) {
 	}, nil
 }
 
-func (i *Interceptor) incrementConnections(addr string) {
+func (i *Interceptor) decrementBlockQueryRetry(query []byte) {
+	for id, block := range i.Configurations.BlockQueries {
+		if bytes.Equal(block.Query, query) {
+			if block.Retrys > 0 {
+				i.Configurations.BlockQueries[id].Retrys--
+			}
+			return
+		}
+	}
+}
+func (i *Interceptor) incrementConnections() {
 	atomic.AddInt64(&i.metrics.ActConns, 1)
-	println("Increment active connections, current and addr:", i.metrics.ActConns, addr)
 }
 
-func (i *Interceptor) decrementConnections(addr string) {
+func (i *Interceptor) decrementConnections() {
 	if i.metrics.ActConns > 0 {
 		atomic.AddInt64(&i.metrics.ActConns, -1)
-		println("Decremented active connections, current and addr:", i.metrics.ActConns, addr)
 	}
 }
 
@@ -80,17 +89,17 @@ func (i *Interceptor) Run() error {
 			i.logErrLnAccept(err)
 			continue
 		}
-		if i.metrics.ActConns > i.Configurations.Limits.MaxActConnections {
+		if i.metrics.ActConns+1 > i.Configurations.Limits.MaxActConnections {
 			i.logLimitExceeded(conn.RemoteAddr().String())
 			conn.Close()
 			continue
 		}
-		i.incrementConnections(conn.RemoteAddr().String())
+		i.incrementConnections()
 		go i.ConnHandler(conn)
 	}
 }
 func (i *Interceptor) ConnHandler(conn net.Conn) {
-	defer i.decrementConnections(conn.RemoteAddr().String())
+	defer i.decrementConnections()
 	defer conn.Close()
 	defer i.logDisconnection(conn.RemoteAddr().String())
 
@@ -100,11 +109,13 @@ func (i *Interceptor) ConnHandler(conn net.Conn) {
 		return
 	}
 	defer dbConn.Close()
+
 	i.logConnection(conn.RemoteAddr().String())
 	pipedone := make(chan struct{}, 2)
 
 	go func() {
 		defer func() { pipedone <- struct{}{} }()
+
 		buf := make([]byte, 4096)
 		for {
 			n, err := conn.Read(buf)
@@ -113,6 +124,24 @@ func (i *Interceptor) ConnHandler(conn net.Conn) {
 			}
 			if n > 0 {
 				rawPack := buf[:n]
+				// log.Printf("[DEBUG]: [%s]\n", string(rawPack))
+				for _, block := range i.Configurations.BlockQueries {
+					cleanBlock := bytes.ToLower(bytes.Join(bytes.Fields(block.Query), []byte(" ")))
+
+					checkPack := bytes.ToLower(rawPack)
+					for j := 0; j < len(checkPack); j++ {
+						if (checkPack[j] < 'a' || checkPack[j] > 'z') && (checkPack[j] < '0' || checkPack[j] > '9') {
+							checkPack[j] = ' '
+						}
+					}
+					checkPack = bytes.Join(bytes.Fields(checkPack), []byte(" "))
+
+					if bytes.Contains(checkPack, cleanBlock) {
+						i.decrementBlockQueryRetry(block.Query)
+						i.logBlockedQuery(conn.RemoteAddr().String(), block.Retrys)
+						return
+					}
+				}
 				_, err := dbConn.Write(rawPack)
 				if err != nil {
 					return
