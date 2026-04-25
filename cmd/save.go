@@ -12,9 +12,9 @@ import (
 var (
 	configFilePath string
 	name           string
-	maxConn        int
+	maxConn        int64
 	blockQuery     string
-	retrys         int
+	retrys         int64
 	proxyAddr      string
 	dbAddr         string
 	authorizedIP   string
@@ -86,9 +86,9 @@ func init() {
 	saveCmd.Flags().StringVarP(&configFilePath, "file", "f", "config.json", "Configuration file")
 	saveCmd.Flags().StringVarP(&name, "name", "n", "default", "Name of the interceptor to manage")
 
-	saveCmd.Flags().IntVarP(&maxConn, "max-conn", "m", 100, "Max connections for this interceptor")
+	saveCmd.Flags().Int64VarP(&maxConn, "max-conn", "m", 100, "Max connections for this interceptor")
 	saveCmd.Flags().StringVarP(&blockQuery, "block", "b", "", "Add query to blacklist")
-	saveCmd.Flags().IntVarP(&retrys, "retrys", "r", 3, "Retry limit for the blocked query")
+	saveCmd.Flags().Int64VarP(&retrys, "retrys", "r", 3, "Retry limit for the blocked query")
 	saveCmd.Flags().StringVarP(&authorizedIP, "authorized-ips", "i", "", "Comma-separated list of authorized IPs")
 
 	saveCmd.Flags().StringVar(&proxyAddr, "proxy-addr", "", "Local proxy address")

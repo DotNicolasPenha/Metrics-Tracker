@@ -4,7 +4,7 @@ import (
 	"errors"
 	"io"
 	"net"
-	"sync"
+	"sync/atomic"
 )
 
 var (
@@ -13,7 +13,6 @@ var (
 )
 
 type Interceptor struct {
-	mu             sync.Mutex
 	Name           string         `json:"name"`
 	ProxyAddr      string         `json:"proxy_addr"`
 	DBAddr         string         `json:"db_addr"`
@@ -28,15 +27,15 @@ type Configurations struct {
 
 type BlockQuerie struct {
 	Query  []byte `json:"query"`
-	Retrys int    `json:"retrys"`
+	Retrys int64  `json:"retrys"`
 }
 
 type Limits struct {
-	MaxActConnections int `json:"max_active_connections"`
+	MaxActConnections int64 `json:"max_active_connections"`
 }
 
 type Metrics struct {
-	ActConns int
+	ActConns int64
 }
 
 func NewInterceptor(proxyAddr, dbAddr string) (*Interceptor, error) {
@@ -49,21 +48,21 @@ func NewInterceptor(proxyAddr, dbAddr string) (*Interceptor, error) {
 	return &Interceptor{
 		ProxyAddr: proxyAddr,
 		DBAddr:    dbAddr,
-		metrics:   Metrics{},
+		metrics: Metrics{
+			ActConns: 0,
+		},
 	}, nil
 }
 
-func (i *Interceptor) incrementConnections() {
-	i.mu.Lock()
-	defer i.mu.Unlock()
-	i.metrics.ActConns++
+func (i *Interceptor) incrementConnections(addr string) {
+	atomic.AddInt64(&i.metrics.ActConns, 1)
+	println("Increment active connections, current and addr:", i.metrics.ActConns, addr)
 }
 
-func (i *Interceptor) decrementConnections() {
-	i.mu.Lock()
-	defer i.mu.Unlock()
+func (i *Interceptor) decrementConnections(addr string) {
 	if i.metrics.ActConns > 0 {
-		i.metrics.ActConns--
+		atomic.AddInt64(&i.metrics.ActConns, -1)
+		println("Decremented active connections, current and addr:", i.metrics.ActConns, addr)
 	}
 }
 
@@ -86,12 +85,12 @@ func (i *Interceptor) Run() error {
 			conn.Close()
 			continue
 		}
-		i.incrementConnections()
+		i.incrementConnections(conn.RemoteAddr().String())
 		go i.ConnHandler(conn)
 	}
 }
 func (i *Interceptor) ConnHandler(conn net.Conn) {
-	defer i.decrementConnections()
+	defer i.decrementConnections(conn.RemoteAddr().String())
 	defer conn.Close()
 	defer i.logDisconnection(conn.RemoteAddr().String())
 
