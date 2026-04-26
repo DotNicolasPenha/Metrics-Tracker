@@ -75,6 +75,15 @@ func (i *Interceptor) decrementConnections() {
 	}
 }
 
+func (i *Interceptor) isBlockedIP(ip string) bool {
+	for _, authorizedIP := range i.Configurations.AuthorizedIPs {
+		if ip == authorizedIP {
+			return false
+		}
+	}
+	return true
+}
+
 func (i *Interceptor) Run() error {
 	ln, err := net.Listen("tcp", i.ProxyAddr)
 	if err != nil {
@@ -91,6 +100,12 @@ func (i *Interceptor) Run() error {
 		}
 		if i.metrics.ActConns+1 > i.Configurations.Limits.MaxActConnections {
 			i.logLimitExceeded(conn.RemoteAddr().String())
+			conn.Close()
+			continue
+		}
+		connAddrStr := conn.LocalAddr().String()
+		if i.isBlockedIP(connAddrStr) {
+			i.logBlockedNotAuthorizedIP(connAddrStr)
 			conn.Close()
 			continue
 		}

@@ -47,7 +47,11 @@ func (i *Interceptor) logErrDBDial(clientAddr string, err error) {
 		Gray, i.Name, Reset, Red, Reset,
 		Bold, Green, clientAddr, Reset, err)
 }
-
+func (i *Interceptor) logBlockedNotAuthorizedIP(clientAddr string) {
+	log.Printf("%s[%s]%s %s[BLOCKED IP]%s from %s%s%s%s: IP not authorized",
+		Gray, i.Name, Reset, Red, Reset,
+		Bold, Green, clientAddr, Reset)
+}
 func (i *Interceptor) logErrLnAccept(err error) {
 	log.Printf("%s[%s]%s %s[LN ACCEPT ERROR]%s %v",
 		Gray, i.Name, Reset, Red, Reset, err)
