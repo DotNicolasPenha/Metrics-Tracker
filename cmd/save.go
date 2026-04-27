@@ -18,6 +18,7 @@ var (
 	proxyAddr      string
 	dbAddr         string
 	authorizedIP   string
+	debugMode      bool
 )
 
 var saveCmd = &cobra.Command{
@@ -70,7 +71,9 @@ var saveCmd = &cobra.Command{
 		if cmd.Flags().Changed("authorized-ips") {
 			target.Configurations.AuthorizedIPs = append(target.Configurations.AuthorizedIPs, authorizedIP)
 		}
-
+		if cmd.Flags().Changed("debug") {
+			target.Configurations.DebugMode = debugMode
+		}
 		if err := user.SaveUser(currentUser, configFilePath); err != nil {
 			fmt.Printf("Error saving configuration: %v\n", err)
 			return
@@ -93,4 +96,5 @@ func init() {
 
 	saveCmd.Flags().StringVar(&proxyAddr, "proxy-addr", "", "Local proxy address")
 	saveCmd.Flags().StringVar(&dbAddr, "db-addr", "", "Target database address")
+	saveCmd.Flags().BoolVarP(&debugMode, "debug", "d", false, "Enable debug mode")
 }

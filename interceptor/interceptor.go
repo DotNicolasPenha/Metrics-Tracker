@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"io"
+	"log"
 	"net"
 	"sync/atomic"
 )
@@ -24,6 +25,7 @@ type Configurations struct {
 	Limits        Limits        `json:"limits"`
 	BlockQueries  []BlockQuerie `json:"block_queries"`
 	AuthorizedIPs []string      `json:"authorized_ips"`
+	DebugMode     bool          `json:"debug_mode"`
 }
 
 type BlockQuerie struct {
@@ -139,7 +141,9 @@ func (i *Interceptor) ConnHandler(conn net.Conn) {
 			}
 			if n > 0 {
 				rawPack := buf[:n]
-				// log.Printf("[DEBUG]: [%s]\n", string(rawPack))
+				if i.Configurations.DebugMode {
+					log.Printf("[DEBUG]: [%s]\n", string(rawPack))
+				}
 				for _, block := range i.Configurations.BlockQueries {
 					cleanBlock := bytes.ToLower(bytes.Join(bytes.Fields(block.Query), []byte(" ")))
 
