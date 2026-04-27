@@ -4,9 +4,9 @@ ALERT: THIS IS AN EXPERIMENTAL PROJECT.
 ## 1. Download Metracker
 
 Select the version for your OS from the assets of this release: v0.0.1-alpha.mt, or choose below:
-- (darwin amd64 - mac): click [download](https://github.com/DotNicolasPenha/metracker/releases/download/v0.0.1-alpha.mt/mt.v0.0.1-alpha-darwin-amd64)
-- (linux amd64 ): click [download](https://github.com/DotNicolasPenha/metracker/releases/download/v0.0.1-alpha.mt/mt.v0.0.1-alpha-linux-amd64)
-- (windows exe): click [download](https://github.com/DotNicolasPenha/metracker/releases/download/v0.0.1-alpha.mt/mt.v0.0.1-alpha-windows-amd64.exe)
+- (darwin amd64 - mac): click [download](https://github.com/DotNicolasPenha/metracker/releases/download/v0.0.2-alpha.mt/mt.v0.0.2-alpha-darwin-amd64)
+- (linux amd64 ): click [download](https://github.com/DotNicolasPenha/metracker/releases/download/v0.0.2-alpha.mt/mt.v0.0.2-alpha-linux-amd64)
+- (windows exe): click [download](https://github.com/DotNicolasPenha/metracker/releases/download/v0.0.2-alpha.mt/mt.v0.0.2-alpha-windows-amd64.exe)
 
 (Rename the binary to 'mt')
 ## 2. Create an Interceptor
